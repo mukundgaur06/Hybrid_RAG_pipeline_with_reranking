@@ -11,6 +11,9 @@ sentence-transformers>=2.6.0
 # Numerical Computing & Vector Similarity
 # Bound to <2.0.0 to prevent C-extension ABI conflicts with PyTorch on Windows
 numpy>=1.24.0,<2.0.0
+# PyArrow is a transitive dependency of streamlit. Pinned to the version
+# validated in the working environment to avoid NumPy 1.x / PyArrow ABI mismatches.
+pyarrow==17.0.0
 
 # Generative AI (Optional Answer Generation)
 # Modern Google GenAI SDK for Gemini models

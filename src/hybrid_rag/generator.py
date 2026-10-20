@@ -24,25 +24,33 @@ CITATION_PATTERN = re.compile(r"\[S\d+\]")
 class GroundedAnswerGenerator:
     """Generates strictly grounded answers from retrieved context using Gemini."""
 
-    DEFAULT_MODEL = "gemini-2.5-flash"
+    DEFAULT_MODEL = "gemini-3.8-flash"
+    # Allow repository-wide override via environment variable
+    _ENV_MODEL_VAR = "GEMINI_MODEL"
     INSUFFICIENT_EVIDENCE_PHRASE = (
         "The provided evidence does not contain sufficient information to answer the question."
     )
 
     def __init__(
         self,
-        model_name: str = DEFAULT_MODEL,
+        model_name: Optional[str] = None,
         api_key: Optional[str] = None,
         client: Optional[Any] = None,
     ):
         """Initialize the grounded answer generator.
 
         Args:
-            model_name: Gemini model identifier (e.g., 'gemini-2.5-flash').
+            model_name: Gemini model identifier (e.g., 'gemini-3.8-flash').
+                If ``None``, the value of the ``GEMINI_MODEL`` environment
+                variable is used, falling back to ``DEFAULT_MODEL``.
             api_key: Optional API key. If omitted, reads from GEMINI_API_KEY or GOOGLE_API_KEY.
             client: Optional injected genai.Client test double for offline testing.
         """
-        self.model_name = model_name
+        self.model_name = (
+            model_name
+            or os.environ.get(self._ENV_MODEL_VAR)
+            or self.DEFAULT_MODEL
+        )
         self._api_key = api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         self._client = client
 

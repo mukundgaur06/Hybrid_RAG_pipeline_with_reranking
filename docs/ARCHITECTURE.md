@@ -353,7 +353,7 @@ The generation stage sits at the narrowest point of the retrieval-reranking funn
                                                                     │
                                                                     ▼
                                               ┌─────────────────────────────────────┐
-                                              │      Gemini API (gemini-2.5-flash)   │
+                                              │      Gemini API (gemini-3.8-flash)   │
                                               │   (or Evidence Viewer Safe Fallback)│
                                               └─────────────────────────────────────┘
                                                                     │

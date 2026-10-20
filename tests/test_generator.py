@@ -151,7 +151,7 @@ def test_successful_generation_with_fake_client():
         response_text="The Saturn V rocket was engineered under Wernher von Braun [S1]."
     )
     generator = GroundedAnswerGenerator(
-        model_name="gemini-2.5-flash",
+        model_name="gemini-3.8-flash",
         client=fake_client,
     )
     candidates = _create_sample_reranked_results()
@@ -160,12 +160,12 @@ def test_successful_generation_with_fake_client():
 
     assert response.is_fallback is False
     assert response.fallback_reason is None
-    assert response.model_name == "gemini-2.5-flash"
+    assert response.model_name == "gemini-3.8-flash"
     assert "Saturn V rocket" in response.answer
     assert response.citations == ["[S1]"]
     assert response.unvalidated_citations == []
     assert len(response.sources) == 2
-    assert fake_client.models.last_model == "gemini-2.5-flash"
+    assert fake_client.models.last_model == "gemini-3.8-flash"
     assert "User Question: Who engineered the rocket?" in fake_client.models.last_prompt
 
 
@@ -207,3 +207,47 @@ def test_generator_empty_query_and_candidates():
     assert "No query was provided" in res_empty_q.answer
     assert res_empty_q.sources == []
     assert fake_client.models.last_prompt is None
+
+
+def test_default_model_is_gemini_3_8_flash():
+    """Verify that the class-level DEFAULT_MODEL constant is gemini-3.8-flash.
+
+    This test pins the default so a future accidental change is caught immediately
+    without requiring a real API key.
+    """
+    assert GroundedAnswerGenerator.DEFAULT_MODEL == "gemini-3.8-flash"
+
+    # Constructing with no model_name argument must resolve to the default.
+    generator = GroundedAnswerGenerator()
+    assert generator.model_name == "gemini-3.8-flash"
+
+
+def test_gemini_model_env_var_overrides_default(monkeypatch):
+    """Verify that the GEMINI_MODEL environment variable overrides the built-in default.
+
+    The injected client means no real API call is made, so no API key is needed.
+    """
+    custom_model = "gemini-custom-test-model"
+    monkeypatch.setenv("GEMINI_MODEL", custom_model)
+    # Clear any GEMINI_API_KEY from the environment so we don't accidentally
+    # trigger a real network request (the fake client is injected instead).
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+    fake_client = FakeGenAIClient(
+        response_text="Apollo 11 landed on the Moon [S1]."
+    )
+    # model_name=None forces resolution through the env-var path.
+    generator = GroundedAnswerGenerator(model_name=None, client=fake_client)
+
+    assert generator.model_name == custom_model, (
+        f"Expected model '{custom_model}' from GEMINI_MODEL env var, "
+        f"got '{generator.model_name}'"
+    )
+
+    candidates = _create_sample_reranked_results()
+    response = generator.generate("Where did Apollo 11 land?", candidates)
+
+    assert response.is_fallback is False
+    assert response.model_name == custom_model
+    assert fake_client.models.last_model == custom_model
