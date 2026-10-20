@@ -17,7 +17,9 @@ from hybrid_rag.exceptions import (
     HybridRAGError,
     UnsupportedFileTypeError,
 )
+from hybrid_rag.generator import GroundedAnswerGenerator
 from hybrid_rag.loader import DocumentLoader
+from hybrid_rag.pipeline import HybridRAGPipeline
 from hybrid_rag.reranker import CrossEncoderReranker
 from hybrid_rag.retrieval import BM25Retriever, DenseRetriever, reciprocal_rank_fusion, tokenize
 from hybrid_rag.schema import (
@@ -25,8 +27,10 @@ from hybrid_rag.schema import (
     Document,
     DocumentPage,
     FusedResult,
+    PipelineResponse,
     RerankedResult,
     RetrievalResult,
+    SourcePassage,
 )
 
 __version__ = "0.1.0"
@@ -40,11 +44,15 @@ __all__ = [
     "RetrievalResult",
     "FusedResult",
     "RerankedResult",
+    "SourcePassage",
+    "PipelineResponse",
     "BM25Retriever",
     "tokenize",
     "DenseRetriever",
     "reciprocal_rank_fusion",
     "CrossEncoderReranker",
+    "GroundedAnswerGenerator",
+    "HybridRAGPipeline",
     "HybridRAGError",
     "UnsupportedFileTypeError",
     "EmptyDocumentError",

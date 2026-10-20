@@ -50,7 +50,8 @@ Hybrid_RAG_pipeline_with_reranking/
 │   └── benchmark_dataset.json# Evaluation queries, targets & ground truths
 ├── examples/                 # Executable scripts and demos
 │   ├── demo_retrieval.py     # Live demonstration of Lexical, Dense, and RRF retrieval
-│   └── demo_reranker.py      # Live demonstration of Cross-Encoder precision reranking
+│   ├── demo_reranker.py      # Live demonstration of Cross-Encoder precision reranking
+│   └── demo_pipeline.py      # Live demonstration of end-to-end grounded RAG pipeline
 ├── sample_docs/              # Factual documents for testing & ingestion
 │   ├── apollo_space_missions.md
 │   ├── cloud_computing_overview.md
@@ -60,9 +61,11 @@ Hybrid_RAG_pipeline_with_reranking/
 │       ├── __init__.py       # Package exports
 │       ├── chunker.py        # Configurable chunking with page isolation
 │       ├── exceptions.py     # Custom error hierarchy
+│       ├── generator.py      # GroundedAnswerGenerator with Gemini API & safe fallback
 │       ├── loader.py         # DocumentLoader (PDF, TXT, MD)
+│       ├── pipeline.py       # HybridRAGPipeline (orchestrating ingestion to generation)
 │       ├── reranker.py       # CrossEncoderReranker (second-stage cross-attention)
-│       ├── schema.py         # Typed dataclasses (Document, Chunk, RetrievalResult, FusedResult, RerankedResult)
+│       ├── schema.py         # Typed dataclasses (Document, Chunk, Results, SourcePassage, PipelineResponse)
 │       └── retrieval/        # Retrieval and fusion subpackage
 │           ├── __init__.py
 │           ├── bm25.py       # BM25Retriever with regex tokenization
@@ -75,7 +78,9 @@ Hybrid_RAG_pipeline_with_reranking/
     ├── test_dense.py         # Dense similarity & fake model offline tests
     ├── test_environment.py   # Baseline environment verification test
     ├── test_fusion.py        # Exact RRF mathematical & deduplication tests
+    ├── test_generator.py     # Grounded synthesis, citation validation & fallback tests
     ├── test_loader.py        # PDF, TXT, MD loader & failure mode tests
+    ├── test_pipeline.py      # End-to-end pipeline ingestion, index reuse & provenance tests
     └── test_reranker.py      # Cross-encoder scoring, ranking & fake model tests
 ```
 
@@ -200,10 +205,35 @@ python examples/demo_reranker.py --query "What rocket was used to launch the Apo
 
 ---
 
-## Current Status: Phase 3 Completed
+## Quick Example: Integrated Grounded Pipeline (Phase 4)
+
+Run the end-to-end pipeline with the default Evidence Viewer mode (no API key required):
+
+```powershell
+python examples/demo_pipeline.py
+```
+
+Or query with an active Gemini API key:
+```powershell
+# Set your API key in your session environment (never hard-code or commit secrets)
+$env:GEMINI_API_KEY = "your-actual-gemini-api-key"
+
+python examples/demo_pipeline.py --query "What rocket was used to launch the Apollo missions, and who led its engineering?"
+```
+
+### Important Generation & Grounding Concepts
+- **Evidence Viewer Fallback**: If no Gemini API key is configured or an API error occurs, answer generation is safely bypassed without crashing. The pipeline outputs structured evidence passages labeled `[S1]`, `[S2]`, etc., making it clear that an API-backed synthesis was not generated.
+- **Generation vs. Retrieval**: Retrieval engines score how closely text passages match a query lexically or semantically. High retrieval or reranker scores indicate high passage relevance, but do **not** guarantee that an LLM will interpret the facts correctly or generate an error-free answer.
+- **Citation Attribution & Limitations**: The generator prompts the LLM to ground its claims exclusively in the assigned sources and cite them via bracketed tags (e.g., `[S1]`). However, **citations do not guarantee factual correctness**; models may occasionally misattribute evidence or produce subtle inaccuracies even when citing a source. Citations are untrusted until verified against source text.
+
+---
+
+## Current Status: Phase 4 Completed
 - [x] Phase 0: Workspace inspection, scaffolding, architecture documentation, sample docs.
 - [x] Phase 1: Robust document loading (`PDF`, `TXT`, `MD`), typed dataclasses, and metadata-preserving chunking.
 - [x] Phase 2: Dual retrieval engines (BM25 lexical search, Dense Bi-Encoder cosine similarity) and Reciprocal Rank Fusion (RRF).
 - [x] Phase 3: Cross-Encoder precision reranking (`cross-encoder/ms-marco-MiniLM-L6-v2`) with rank provenance tracking.
-- [ ] *Next: Phase 4 — Grounded Synthesis & Citation Engine (Gemini API with offline fallback).*
+- [x] Phase 4: Grounded answer generation (Gemini API with strict grounding), citation validation, and safe Evidence Viewer fallback.
+- [ ] *Next: Phase 5 — Streamlit Web Interface & Quantitative Retrieval Evaluation (Recall@k, MRR).*
+
 

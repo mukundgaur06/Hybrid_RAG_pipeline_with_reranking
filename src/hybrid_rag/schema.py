@@ -137,3 +137,41 @@ class RerankedResult:
     dense_rank: Optional[int] = None
     dense_score: Optional[float] = None
 
+
+@dataclass
+class SourcePassage:
+    """Represents a passage formatted as an explicit evidence source for the generator.
+
+    Attributes:
+        source_id: Explicit citation identifier, e.g. '[S1]', '[S2]'.
+        chunk: The underlying Chunk containing text, document name, page, and offsets.
+        reranked_result: The full RerankedResult preserving retrieval and fusion provenance.
+    """
+    source_id: str
+    chunk: Chunk
+    reranked_result: Optional[RerankedResult] = None
+
+
+@dataclass
+class PipelineResponse:
+    """Structured response returned by the HybridRAG pipeline and generator.
+
+    Attributes:
+        query: The user's query string.
+        answer: Synthesized answer text, or descriptive evidence status when in fallback mode.
+        sources: Ordered list of assigned evidence passages.
+        citations: List of validated citation IDs (e.g. ['[S1]', '[S2]']) referenced in the answer.
+        unvalidated_citations: List of citation IDs cited in the answer that were not present in the sources.
+        is_fallback: True if generation fell back to Evidence Viewer mode (e.g., missing API key or API error).
+        fallback_reason: Explanation of why fallback mode was activated, if applicable.
+        model_name: Name of the generation model used, or None if generation was skipped.
+    """
+    query: str
+    answer: str
+    sources: List[SourcePassage] = field(default_factory=list)
+    citations: List[str] = field(default_factory=list)
+    unvalidated_citations: List[str] = field(default_factory=list)
+    is_fallback: bool = False
+    fallback_reason: Optional[str] = None
+    model_name: Optional[str] = None
+

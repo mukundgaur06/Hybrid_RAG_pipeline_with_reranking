@@ -335,3 +335,96 @@ for res in final_results:
     print(f"Text: {res.chunk.text[:80]}...\n")
 ```
 
+---
+
+## 9. Grounded Synthesis & Citation Engine (Phase 4 Implementation)
+
+### 9.1 Grounded Generation Architecture & Evidence Formatting
+The generation stage sits at the narrowest point of the retrieval-reranking funnel:
+
+```
+[Candidate Pool: K Chunks] ──► [Cross-Encoder Reranker] ──► [Top-M Chunks (e.g., M=3)]
+                                                                    │
+                                                                    ▼
+                                               [Assign Stable IDs: [S1], [S2], [S3]]
+                                                                    │
+                                                                    ▼
+                                               [Strict Grounding Prompt Construction]
+                                                                    │
+                                                                    ▼
+                                              ┌─────────────────────────────────────┐
+                                              │      Gemini API (gemini-2.5-flash)   │
+                                              │   (or Evidence Viewer Safe Fallback)│
+                                              └─────────────────────────────────────┘
+                                                                    │
+                                                                    ▼
+                                               [Citation Extraction & Cross-Check]
+                                                                    │
+                                                                    ▼
+                                                          [PipelineResponse]
+```
+
+1. **Explicit Source Identification**:
+   - Each selected candidate chunk is wrapped in a `SourcePassage` dataclass and assigned a stable identifier: `[S1]`, `[S2]`, etc.
+   - Headers clearly attribute metadata: `Source [S1] (File: apollo_space_missions.md, Page 1):`.
+2. **Strict Grounding Rules**:
+   - The LLM prompt explicitly restricts answers to the facts directly documented in the context.
+   - Extrapolation and ungrounded pre-training assumptions are forbidden.
+   - If the context lacks sufficient evidence, the model is instructed to return a standard refusal phrase: `"The provided evidence does not contain sufficient information to answer the question."`
+
+### 9.2 Citations: Verification, Untrusted Attribution, and Limitations
+- **Regex Extraction & Scope Validation**:
+  - LLM-generated text is parsed using regex `r"\[S\d+\]"`.
+  - Every extracted citation is cross-referenced against the set of valid source IDs provided in that specific query request.
+  - Citations matching valid sources populate `citations`, while hallucinated or out-of-scope identifiers populate `unvalidated_citations`.
+- **Citations Do Not Guarantee Factual Correctness**:
+  - A citation indicates that the model *claimed* to derive a statement from that source.
+  - LLMs can misattribute statements, hallucinate facts and attach valid citation tags, or misinterpret technical nuances. Citations provide verifiable attribution for auditability, but never replace empirical evaluation or human verification.
+
+### 9.3 Generation vs. Retrieval Scores
+- **Retrieval and Reranker Scores**:
+  - BM25, dense cosine similarity, RRF, and Cross-Encoder scores measure lexical overlap and semantic alignment between the query and candidate passages.
+  - High retrieval scores do not guarantee answer accuracy. If a user asks a question whose answer does not exist in the corpus, retrieval engines will still return the closest available passages.
+- **Generation Responsibility**:
+  - The generation layer is responsible for determining whether the retrieved passages actually answer the query, synthesizing a coherent response, and refusing to answer if the evidence is insufficient.
+
+### 9.4 Safe Offline Fallback: "Evidence Viewer" Mode
+In enterprise and open-source applications, missing API keys, rate limits, or network interruptions must never crash the service:
+- If `GEMINI_API_KEY` is unset or empty, `GroundedAnswerGenerator` does not raise an exception.
+- It returns a structured `PipelineResponse` in **Evidence Viewer Mode** (`is_fallback=True`).
+- Users receive the fully retrieved, fused, and reranked evidence passages with their assigned `[S1]`, `[S2]` identifiers and complete metadata, alongside an explicit notice that LLM generation was skipped.
+- If an API request raises a network error or quota exception, the generator catches the error, redacts any sensitive credential data, and falls back gracefully to Evidence Viewer mode.
+
+### 9.5 Integrated Pipeline Orchestrator (`HybridRAGPipeline`)
+- Coordinates `DocumentLoader`, `TextChunker`, `BM25Retriever`, `DenseRetriever`, `reciprocal_rank_fusion`, `CrossEncoderReranker`, and `GroundedAnswerGenerator`.
+- **Single-Pass Ingestion**: `ingest_documents()` indexes chunks into memory once.
+- **Index Reuse**: Subsequent calls to `query()` execute lexical search and query embedding against the existing indexes without re-reading files or re-embedding the document collection.
+
+### 9.6 Python Usage Example (Phase 4)
+```python
+from hybrid_rag import HybridRAGPipeline
+
+# 1. Initialize pipeline (configurable candidate pool and context size)
+pipeline = HybridRAGPipeline(
+    candidate_pool_size=6,
+    final_context_size=3,
+)
+
+# 2. Ingest corpus once
+pipeline.ingest_documents([
+    "sample_docs/apollo_space_missions.md",
+    "sample_docs/photosynthesis_biology.txt",
+])
+
+# 3. Query the pipeline
+response = pipeline.query("What rocket was used to launch the Apollo missions, and who led its engineering?")
+
+print(f"Mode: {'Fallback' if response.is_fallback else 'Generated'}")
+print(f"Answer: {response.answer}\n")
+print(f"Validated Citations: {response.citations}")
+
+for src in response.sources:
+    print(f"{src.source_id}: {src.chunk.document_name} | {src.chunk.text[:60]}...")
+```
+
+

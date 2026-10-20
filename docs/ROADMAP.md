@@ -58,13 +58,19 @@ This roadmap organizes the development of HybridRAG into self-contained, verifia
 ## Phase 4: Grounded Synthesis & Citation Engine
 - **Objective**: Synthesize concise answers backed by verifiable citations using Gemini API, with a graceful fallback if no API key is provided.
 - **Key Deliverables**:
-  - `src/hybrid_rag/generator.py`: Prompt engineering for strict factual grounding; API wrapper using `google-genai` SDK.
-  - `src/hybrid_rag/pipeline.py`: Unified pipeline coordinating document loading, indexing, hybrid retrieval, reranking, and generation.
-  - Fallback logic: "Evidence Viewer" mode presenting ranked evidence chunks with confidence scores and snippet highlights when no API key exists.
+  - [x] `src/hybrid_rag/generator.py`: Prompt engineering for strict factual grounding; API wrapper using `google-genai` SDK with injected client seam.
+  - [x] `src/hybrid_rag/pipeline.py`: Unified pipeline coordinating document loading, indexing, hybrid retrieval, reranking, and generation.
+  - [x] `src/hybrid_rag/schema.py`: Added `SourcePassage` and `PipelineResponse` data structures for citation mapping and safe provenance tracking.
+  - [x] `src/hybrid_rag/__init__.py`: Exported `GroundedAnswerGenerator`, `HybridRAGPipeline`, `SourcePassage`, and `PipelineResponse`.
+  - [x] Fallback logic: "Evidence Viewer" mode presenting ranked evidence chunks with source identifiers and metadata when no API key exists or on API error.
+  - [x] Citation validation: Regex citation parsing cross-checked against assigned source IDs to separate valid citations from hallucinated citations.
+  - [x] `examples/demo_pipeline.py`: Interactive end-to-end command-line demonstration supporting both API-backed generation and Evidence Viewer fallback.
 - **Testing**:
-  - Mocked LLM tests checking prompt construction and citation extraction.
-  - Fallback test ensuring retrieval and evidence output work completely offline without network calls or API keys.
-- **Interview Focus**: Hallucination mitigation techniques, prompt injection defenses, citation attribution, and offline resiliency.
+  - [x] 7 dedicated generator unit tests (`tests/test_generator.py`) checking prompt formatting, citation validation, missing-key fallback, and API error safety.
+  - [x] 4 dedicated pipeline integration tests (`tests/test_pipeline.py`) verifying index reuse, provenance preservation, and error handling.
+  - [x] Full automated test suite (53 tests) passing 100% offline without network calls or API keys.
+- **Checkpoint**: Full end-to-end pipeline complete; verified with 53 automated tests and CLI demonstration script.
+- **Interview Focus**: Hallucination mitigation techniques; difference between retrieval scores and answer correctness; citation attribution limitations; offline resiliency and graceful degradation.
 
 ---
 
