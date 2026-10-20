@@ -77,8 +77,15 @@ This roadmap organizes the development of HybridRAG into self-contained, verifia
 ## Phase 5: Streamlit Application, Retrieval Evaluation & Benchmarking
 - **Objective**: Build an interactive web UI and run an automated evaluation suite calculating Recall@k and MRR.
 - **Key Deliverables**:
-  - `src/hybrid_rag/ui/app.py`: Streamlit application featuring document upload, query input, answer generation, expandable citations, and score inspection tabs (BM25 vs. Dense vs. RRF vs. Reranker).
-  - `evaluation/evaluate.py`: Automated evaluation script measuring Recall@1, Recall@5, and MRR against `evaluation/benchmark_dataset.json`.
+  - [x] `src/hybrid_rag/ui/app.py` & `app.py`: Sleek dark Streamlit application with multi-file upload (.pdf, .txt, .md), session isolation, sample loader, Evidence Viewer mode, and multi-stage provenance inspection tabs.
+  - [x] `src/hybrid_rag/evaluation.py`: Exact mathematical definitions and implementations for Recall@k, Reciprocal Rank, and Mean Reciprocal Rank (MRR).
+  - [x] `evaluation/relevance_judgments.json`: Explicit, human-auditable ground-truth chunk relevance mappings for all benchmark queries.
+  - [x] `evaluation/evaluate.py`: Automated reproducible evaluation suite measuring Recall@1, Recall@3, Recall@5, and MRR across BM25, Dense, RRF, and Cross-Encoder reranking.
+  - [x] `evaluation/benchmark_results.json`: Detailed empirical benchmark run outputs.
 - **Testing**:
-  - Integration test evaluating pipeline performance on the benchmark dataset.
-- **Interview Focus**: Quantitative RAG evaluation methodology; interpreting retrieval metrics; production monitoring and latency profiling.
+  - [x] 4 offline unit tests for evaluation metrics (`tests/test_evaluation.py`).
+  - [x] 2 offline UI tests using `streamlit.testing.v1.AppTest` (`tests/test_ui.py`).
+  - [x] Full automated test suite (59 tests) passing 100% offline without network calls or API keys.
+- **Checkpoint**: Production-ready HybridRAG system complete; validated across all 5 phases with 59 automated tests, quantitative benchmark evaluations, and an interactive Streamlit UI.
+- **Interview Focus**: Quantitative RAG evaluation methodology; interpreting retrieval metrics; production monitoring and latency profiling; session isolation vs. shared model resource caching.
+

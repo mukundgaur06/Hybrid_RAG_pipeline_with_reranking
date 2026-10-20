@@ -32,6 +32,11 @@ from hybrid_rag.schema import (
     RetrievalResult,
     SourcePassage,
 )
+from hybrid_rag.evaluation import (
+    calculate_mrr,
+    calculate_recall_at_k,
+    calculate_reciprocal_rank,
+)
 
 __version__ = "0.1.0"
 
@@ -53,6 +58,9 @@ __all__ = [
     "CrossEncoderReranker",
     "GroundedAnswerGenerator",
     "HybridRAGPipeline",
+    "calculate_recall_at_k",
+    "calculate_reciprocal_rank",
+    "calculate_mrr",
     "HybridRAGError",
     "UnsupportedFileTypeError",
     "EmptyDocumentError",

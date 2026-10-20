@@ -45,9 +45,13 @@ Hybrid_RAG_pipeline_with_reranking/
 │   ├── ARCHITECTURE.md       # Detailed technical design & diagrams
 │   ├── GLOSSARY.md           # Beginner-friendly ML engineering concepts
 │   └── ROADMAP.md            # Phase-by-phase execution plan
+├── app.py                    # Top-level Streamlit entry point
 ├── evaluation/
 │   ├── README.md             # Benchmark description and metrics guide
-│   └── benchmark_dataset.json# Evaluation queries, targets & ground truths
+│   ├── benchmark_dataset.json# Evaluation queries, targets & ground truths
+│   ├── benchmark_results.json# Empirical benchmark run results
+│   ├── evaluate.py           # Automated IR benchmark evaluation script
+│   └── relevance_judgments.json# Explicit human-auditable ground-truth mappings
 ├── examples/                 # Executable scripts and demos
 │   ├── demo_retrieval.py     # Live demonstration of Lexical, Dense, and RRF retrieval
 │   ├── demo_reranker.py      # Live demonstration of Cross-Encoder precision reranking
@@ -60,28 +64,34 @@ Hybrid_RAG_pipeline_with_reranking/
 │   └── hybrid_rag/           # Core package source code
 │       ├── __init__.py       # Package exports
 │       ├── chunker.py        # Configurable chunking with page isolation
+│       ├── evaluation.py     # Pure IR metrics (Recall@k, RR, MRR)
 │       ├── exceptions.py     # Custom error hierarchy
 │       ├── generator.py      # GroundedAnswerGenerator with Gemini API & safe fallback
 │       ├── loader.py         # DocumentLoader (PDF, TXT, MD)
 │       ├── pipeline.py       # HybridRAGPipeline (orchestrating ingestion to generation)
 │       ├── reranker.py       # CrossEncoderReranker (second-stage cross-attention)
 │       ├── schema.py         # Typed dataclasses (Document, Chunk, Results, SourcePassage, PipelineResponse)
-│       └── retrieval/        # Retrieval and fusion subpackage
+│       ├── retrieval/        # Retrieval and fusion subpackage
+│       │   ├── __init__.py
+│       │   ├── bm25.py       # BM25Retriever with regex tokenization
+│       │   ├── dense.py      # DenseRetriever with single-pass in-memory cosine sim
+│       │   └── fusion.py     # Reciprocal Rank Fusion (RRF)
+│       └── ui/               # Streamlit user interface
 │           ├── __init__.py
-│           ├── bm25.py       # BM25Retriever with regex tokenization
-│           ├── dense.py      # DenseRetriever with single-pass in-memory cosine sim
-│           └── fusion.py     # Reciprocal Rank Fusion (RRF)
+│           └── app.py        # Interactive web application
 └── tests/                    # Unit and integration test suite
     ├── __init__.py
     ├── test_bm25.py          # Lexical ranking, tokenization & edge case tests
     ├── test_chunker.py       # Chunk boundaries, overlap & page isolation tests
     ├── test_dense.py         # Dense similarity & fake model offline tests
     ├── test_environment.py   # Baseline environment verification test
+    ├── test_evaluation.py    # Metric mathematical & boundary tests
     ├── test_fusion.py        # Exact RRF mathematical & deduplication tests
     ├── test_generator.py     # Grounded synthesis, citation validation & fallback tests
     ├── test_loader.py        # PDF, TXT, MD loader & failure mode tests
     ├── test_pipeline.py      # End-to-end pipeline ingestion, index reuse & provenance tests
-    └── test_reranker.py      # Cross-encoder scoring, ranking & fake model tests
+    ├── test_reranker.py      # Cross-encoder scoring, ranking & fake model tests
+    └── test_ui.py            # Streamlit AppTest headless UI tests
 ```
 
 ---
@@ -201,7 +211,7 @@ python examples/demo_reranker.py --query "What rocket was used to launch the Apo
 - **Two-Stage Architecture**: Reranking is applied strictly to a pre-filtered candidate pool from Stage 1 (RRF fusion), not the entire corpus. This balances the high $O(K \cdot L^2)$ computational complexity of cross-attention with retrieval latency.
 - **Joint Token Interactions**: While Bi-Encoders compress text into fixed vectors independently, Cross-Encoders attend over all query and document tokens jointly via all-to-all attention layers.
 - **Uncalibrated Scores**: Cross-Encoder scores are unbounded relevance logits (higher = more relevant). They are *not* calibrated probabilities and should not be interpreted as percentage confidences.
-- **Empirical Validation Required**: Adding a reranker shifts candidate ordering according to the model's relevance training, but whether it improves real-world task accuracy must be empirically validated on a benchmark dataset (scheduled for Phase 5).
+- **Empirical Validation Required**: Adding a reranker shifts candidate ordering according to the model's relevance training, but whether it improves real-world task accuracy must be empirically validated on a benchmark dataset. See the [Phase 5 quantitative evaluation](#quantitative-evaluation-benchmark-phase-5) below for measured results on the included 8-query benchmark.
 
 ---
 
@@ -228,12 +238,51 @@ python examples/demo_pipeline.py --query "What rocket was used to launch the Apo
 
 ---
 
-## Current Status: Phase 4 Completed
+## Interactive Streamlit Web Application (Phase 5)
+
+Launch the web application locally:
+
+```powershell
+streamlit run app.py
+```
+
+The application provides:
+- **Multiple Document Upload**: Supports `.pdf`, `.txt`, and `.md` with automatic character sliding-window chunking.
+- **In-Memory Session Isolation**: Uploaded files and index structures are held strictly in the user's active session state and cleaned up after processing.
+- **One-Click Sample Loader**: Click **🚀 Load Samples** to index sample Apollo, Biology, and Cloud documents without uploading manual files.
+- **Dual-Mode Synthesis**: Operates in **Grounded Gemini Synthesis** mode when `GEMINI_API_KEY` is provided, or gracefully defaults to **Evidence Viewer Mode** when running offline.
+- **Provenance Inspection**: View exact source rankings across BM25, Dense similarity, RRF score, and Cross-Encoder relevance logits.
+
+---
+
+## Quantitative Evaluation Benchmark (Phase 5)
+
+Run the automated evaluation benchmark across the test corpus:
+
+```powershell
+python evaluation/evaluate.py
+```
+
+### Empirical Results (8 Domain Queries, 20 Chunks):
+
+| Retrieval Configuration | Recall@1 | Recall@3 | Recall@5 | MRR |
+| :--- | :---: | :---: | :---: | :---: |
+| **BM25 (Lexical Only)** | 0.5000 | 0.8750 | 0.8750 | 0.7500 |
+| **Dense (Bi-Encoder Only)** | 0.3750 | 0.8750 | **1.0000** | 0.6771 |
+| **RRF Hybrid (k=60)** | 0.3750 | 0.8750 | 0.8750 | 0.6667 |
+| **Cross-Encoder Reranked** | **0.5000** | 0.8750 | 0.8750 | **0.7500** |
+
+*Detailed benchmark methodology, metric formulas, and query-level relevance judgments are documented in [`evaluation/README.md`](evaluation/README.md).*
+
+---
+
+## Current Status: Phase 5 Completed (Production Ready)
 - [x] Phase 0: Workspace inspection, scaffolding, architecture documentation, sample docs.
 - [x] Phase 1: Robust document loading (`PDF`, `TXT`, `MD`), typed dataclasses, and metadata-preserving chunking.
 - [x] Phase 2: Dual retrieval engines (BM25 lexical search, Dense Bi-Encoder cosine similarity) and Reciprocal Rank Fusion (RRF).
 - [x] Phase 3: Cross-Encoder precision reranking (`cross-encoder/ms-marco-MiniLM-L6-v2`) with rank provenance tracking.
 - [x] Phase 4: Grounded answer generation (Gemini API with strict grounding), citation validation, and safe Evidence Viewer fallback.
-- [ ] *Next: Phase 5 — Streamlit Web Interface & Quantitative Retrieval Evaluation (Recall@k, MRR).*
+- [x] Phase 5: Interactive Streamlit web application (`app.py`), quantitative evaluation suite (`evaluation/evaluate.py`), and 59 automated tests.
+
 
 

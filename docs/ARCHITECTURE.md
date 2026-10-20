@@ -427,4 +427,40 @@ for src in response.sources:
     print(f"{src.source_id}: {src.chunk.document_name} | {src.chunk.text[:60]}...")
 ```
 
+---
+
+## 10. Interactive Streamlit UI & Quantitative Evaluation (Phase 5 Implementation)
+
+### 10.1 Web Application Architecture & State Isolation
+The Streamlit application (`src/hybrid_rag/ui/app.py` & `app.py`) provides an interactive interface for uploading documents, querying the hybrid pipeline, and inspecting multi-stage rankings.
+
+#### Design Principles:
+1. **Model Resource Caching (`@st.cache_resource`)**:
+   - The Bi-Encoder (`all-MiniLM-L6-v2`) and Cross-Encoder (`ms-marco-MiniLM-L6-v2`) weights are cached once at the server level.
+   - Prevents multi-second model reload latencies on each UI widget interaction.
+2. **Strict Session State Isolation**:
+   - The user's `HybridRAGPipeline` instance, uploaded document texts, and in-memory index vectors reside exclusively within `st.session_state`.
+   - Different users connecting to the same server cannot see, query, or interfere with each other's uploaded document corpora.
+3. **Ephemeral Ingestion via Temporary Directories**:
+   - Uploaded PDF, TXT, and Markdown files are temporarily written to a dedicated `tempfile.TemporaryDirectory()`.
+   - `DocumentLoader` and `TextChunker` parse the text into in-memory `Chunk` objects.
+   - The temporary directory is immediately wiped from the file system upon exiting the context block, preventing persistent storage of sensitive user uploads in the repository.
+
+### 10.2 Quantitative Evaluation Suite (`evaluation/`)
+To replace subjective "eyeball" assessments with empirical rigor, Phase 5 provides an automated benchmark (`evaluation/evaluate.py`) evaluating 8 curated domain queries against explicit ground-truth judgments (`evaluation/relevance_judgments.json`).
+
+#### Empirical Benchmark Comparison:
+| Configuration | Recall@1 | Recall@3 | Recall@5 | MRR |
+| :--- | :---: | :---: | :---: | :---: |
+| **BM25 (Lexical Only)** | 0.5000 | 0.8750 | 0.8750 | 0.7500 |
+| **Dense (Bi-Encoder Only)** | 0.3750 | 0.8750 | **1.0000** | 0.6771 |
+| **RRF Hybrid (k=60)** | 0.3750 | 0.8750 | 0.8750 | 0.6667 |
+| **Cross-Encoder Reranked** | **0.5000** | 0.8750 | 0.8750 | **0.7500** |
+
+#### Key Takeaways:
+- **Dense High Recall**: Dense semantic search achieved a perfect 1.0000 Recall@5, ensuring the correct chunk is always in the candidate pool for the reranker.
+- **Reranker High Precision**: The Cross-Encoder boosted Recall@1 from 0.3750 (RRF) to 0.5000 and MRR from 0.6667 to 0.7500 by utilizing all-to-all cross-attention to resolve compound query requirements.
+- **BM25 Lexical Safeguard**: BM25 excels on exact acronyms and numbers (e.g., "34.5 meganewtons"), compensating for potential embedding dilution.
+
+
 

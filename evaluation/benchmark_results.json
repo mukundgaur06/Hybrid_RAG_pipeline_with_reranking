@@ -1,0 +1,334 @@
+{
+  "summary": {
+    "BM25": {
+      "Recall@1": 0.5,
+      "Recall@3": 0.875,
+      "Recall@5": 0.875,
+      "MRR": 0.75
+    },
+    "Dense": {
+      "Recall@1": 0.375,
+      "Recall@3": 0.875,
+      "Recall@5": 1.0,
+      "MRR": 0.6770833333333333
+    },
+    "RRF_Hybrid": {
+      "Recall@1": 0.375,
+      "Recall@3": 0.875,
+      "Recall@5": 0.875,
+      "MRR": 0.6666666666666666
+    },
+    "Cross_Encoder": {
+      "Recall@1": 0.5,
+      "Recall@3": 0.875,
+      "Recall@5": 0.875,
+      "MRR": 0.75
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "q01",
+      "query": "What rocket was used to launch the Apollo missions, and who led its engineering?",
+      "relevant_chunk_ids": [
+        "apollo_space_missions_937f609c_c1"
+      ],
+      "retrieved": {
+        "BM25": [
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c4"
+        ],
+        "Dense": [
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c3"
+        ],
+        "RRF_Hybrid": [
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c3"
+        ],
+        "Cross_Encoder": [
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c3"
+        ]
+      }
+    },
+    {
+      "query_id": "q02",
+      "query": "How much thrust did the Saturn V rocket produce at sea level?",
+      "relevant_chunk_ids": [
+        "apollo_space_missions_937f609c_c1"
+      ],
+      "retrieved": {
+        "BM25": [
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c3",
+          "cloud_computing_overview_1a3389c4_c2",
+          "cloud_computing_overview_1a3389c4_c3"
+        ],
+        "Dense": [
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c4"
+        ],
+        "RRF_Hybrid": [
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c2",
+          "cloud_computing_overview_1a3389c4_c2"
+        ],
+        "Cross_Encoder": [
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c2",
+          "cloud_computing_overview_1a3389c4_c2"
+        ]
+      }
+    },
+    {
+      "query_id": "q03",
+      "query": "Why was Apollo 13 unable to land on the Moon, and which module served as a life raft?",
+      "relevant_chunk_ids": [
+        "apollo_space_missions_937f609c_c4"
+      ],
+      "retrieved": {
+        "BM25": [
+          "apollo_space_missions_937f609c_c4",
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c2"
+        ],
+        "Dense": [
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c4",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c2",
+          "apollo_space_missions_937f609c_c0"
+        ],
+        "RRF_Hybrid": [
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c4",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c2"
+        ],
+        "Cross_Encoder": [
+          "apollo_space_missions_937f609c_c4",
+          "apollo_space_missions_937f609c_c3",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c2"
+        ]
+      }
+    },
+    {
+      "query_id": "q04",
+      "query": "What is the net stoichiometric chemical equation for photosynthesis?",
+      "relevant_chunk_ids": [
+        "photosynthesis_biology_8997c3d1_c0"
+      ],
+      "retrieved": {
+        "BM25": [
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c6",
+          "cloud_computing_overview_1a3389c4_c5",
+          "apollo_space_missions_937f609c_c0",
+          "cloud_computing_overview_1a3389c4_c2"
+        ],
+        "Dense": [
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c3",
+          "photosynthesis_biology_8997c3d1_c1"
+        ],
+        "RRF_Hybrid": [
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c6",
+          "cloud_computing_overview_1a3389c4_c5",
+          "photosynthesis_biology_8997c3d1_c2"
+        ],
+        "Cross_Encoder": [
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c6",
+          "cloud_computing_overview_1a3389c4_c5"
+        ]
+      }
+    },
+    {
+      "query_id": "q05",
+      "query": "What happens during photolysis of water in the light-dependent reactions?",
+      "relevant_chunk_ids": [
+        "photosynthesis_biology_8997c3d1_c3"
+      ],
+      "retrieved": {
+        "BM25": [
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c4",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c0",
+          "cloud_computing_overview_1a3389c4_c3"
+        ],
+        "Dense": [
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c3",
+          "photosynthesis_biology_8997c3d1_c6"
+        ],
+        "RRF_Hybrid": [
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c0",
+          "apollo_space_missions_937f609c_c5",
+          "apollo_space_missions_937f609c_c0"
+        ],
+        "Cross_Encoder": [
+          "photosynthesis_biology_8997c3d1_c2",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c0",
+          "apollo_space_missions_937f609c_c0",
+          "apollo_space_missions_937f609c_c5"
+        ]
+      }
+    },
+    {
+      "query_id": "q06",
+      "query": "Which enzyme fixes atmospheric carbon dioxide in the Calvin cycle?",
+      "relevant_chunk_ids": [
+        "photosynthesis_biology_8997c3d1_c5"
+      ],
+      "retrieved": {
+        "BM25": [
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c5",
+          "photosynthesis_biology_8997c3d1_c6",
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c1"
+        ],
+        "Dense": [
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c5",
+          "photosynthesis_biology_8997c3d1_c6",
+          "photosynthesis_biology_8997c3d1_c3"
+        ],
+        "RRF_Hybrid": [
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c5",
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c6",
+          "photosynthesis_biology_8997c3d1_c1"
+        ],
+        "Cross_Encoder": [
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c5",
+          "photosynthesis_biology_8997c3d1_c6",
+          "photosynthesis_biology_8997c3d1_c0",
+          "photosynthesis_biology_8997c3d1_c1"
+        ]
+      }
+    },
+    {
+      "query_id": "q07",
+      "query": "How many minutes of downtime are permitted per year under a four nines SLA?",
+      "relevant_chunk_ids": [
+        "cloud_computing_overview_1a3389c4_c3",
+        "cloud_computing_overview_1a3389c4_c4"
+      ],
+      "retrieved": {
+        "BM25": [
+          "cloud_computing_overview_1a3389c4_c3",
+          "cloud_computing_overview_1a3389c4_c4",
+          "cloud_computing_overview_1a3389c4_c2",
+          "apollo_space_missions_937f609c_c1",
+          "apollo_space_missions_937f609c_c0"
+        ],
+        "Dense": [
+          "cloud_computing_overview_1a3389c4_c3",
+          "cloud_computing_overview_1a3389c4_c4",
+          "cloud_computing_overview_1a3389c4_c2",
+          "cloud_computing_overview_1a3389c4_c0",
+          "cloud_computing_overview_1a3389c4_c5"
+        ],
+        "RRF_Hybrid": [
+          "cloud_computing_overview_1a3389c4_c3",
+          "cloud_computing_overview_1a3389c4_c4",
+          "cloud_computing_overview_1a3389c4_c2",
+          "apollo_space_missions_937f609c_c1",
+          "cloud_computing_overview_1a3389c4_c0"
+        ],
+        "Cross_Encoder": [
+          "cloud_computing_overview_1a3389c4_c3",
+          "cloud_computing_overview_1a3389c4_c4",
+          "cloud_computing_overview_1a3389c4_c2",
+          "apollo_space_missions_937f609c_c1",
+          "cloud_computing_overview_1a3389c4_c0"
+        ]
+      }
+    },
+    {
+      "query_id": "q08",
+      "query": "How does the cache-aside pattern handle read requests and cache misses?",
+      "relevant_chunk_ids": [
+        "cloud_computing_overview_1a3389c4_c5",
+        "cloud_computing_overview_1a3389c4_c6"
+      ],
+      "retrieved": {
+        "BM25": [
+          "cloud_computing_overview_1a3389c4_c5",
+          "cloud_computing_overview_1a3389c4_c6",
+          "photosynthesis_biology_8997c3d1_c4",
+          "apollo_space_missions_937f609c_c0",
+          "photosynthesis_biology_8997c3d1_c3"
+        ],
+        "Dense": [
+          "cloud_computing_overview_1a3389c4_c5",
+          "cloud_computing_overview_1a3389c4_c6",
+          "cloud_computing_overview_1a3389c4_c4",
+          "photosynthesis_biology_8997c3d1_c4",
+          "photosynthesis_biology_8997c3d1_c2"
+        ],
+        "RRF_Hybrid": [
+          "cloud_computing_overview_1a3389c4_c5",
+          "cloud_computing_overview_1a3389c4_c6",
+          "photosynthesis_biology_8997c3d1_c4",
+          "cloud_computing_overview_1a3389c4_c4",
+          "apollo_space_missions_937f609c_c0"
+        ],
+        "Cross_Encoder": [
+          "cloud_computing_overview_1a3389c4_c5",
+          "cloud_computing_overview_1a3389c4_c6",
+          "cloud_computing_overview_1a3389c4_c4",
+          "photosynthesis_biology_8997c3d1_c4",
+          "apollo_space_missions_937f609c_c0"
+        ]
+      }
+    }
+  ],
+  "k_values": [
+    1,
+    3,
+    5
+  ],
+  "total_queries": 8
+}
