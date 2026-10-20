@@ -110,3 +110,30 @@ class FusedResult:
     bm25_score: Optional[float] = None
     dense_rank: Optional[int] = None
     dense_score: Optional[float] = None
+
+
+@dataclass
+class RerankedResult:
+    """Represents a candidate chunk scored and re-ordered by the Cross-Encoder reranker.
+
+    Attributes:
+        chunk: The underlying Chunk object preserving full text and metadata.
+        reranker_score: The raw relevance logit assigned by the Cross-Encoder.
+        rerank_rank: 1-based rank position after Cross-Encoder precision reranking.
+        rrf_score: Original candidate score from Reciprocal Rank Fusion, if present.
+        rrf_rank: Original 1-based rank position from Reciprocal Rank Fusion, if present.
+        bm25_rank: Original 1-based rank from BM25 lexical retrieval, if present.
+        bm25_score: Original raw score from BM25 lexical retrieval, if present.
+        dense_rank: Original 1-based rank from Dense vector retrieval, if present.
+        dense_score: Original cosine similarity from Dense vector retrieval, if present.
+    """
+    chunk: Chunk
+    reranker_score: float
+    rerank_rank: int
+    rrf_score: Optional[float] = None
+    rrf_rank: Optional[int] = None
+    bm25_rank: Optional[int] = None
+    bm25_score: Optional[float] = None
+    dense_rank: Optional[int] = None
+    dense_score: Optional[float] = None
+

@@ -241,3 +241,97 @@ for item in fused_results:
     print(f"Rank {item.rank} | RRF Score: {item.rrf_score:.6f} | Chunk ID: {item.chunk.chunk_id}")
     print(f"   Provenance: BM25 Rank {item.bm25_rank} | Dense Rank {item.dense_rank}")
 ```
+
+---
+
+## 8. Cross-Encoder Precision Reranking (Phase 3 Implementation)
+
+### 8.1 Multi-Stage Architecture: "Retrieve-then-Rerank"
+In production Information Retrieval (IR) and RAG systems, scaling constraints mandate a multi-stage funnel:
+
+```
+[Entire Corpus: N Chunks]
+           │
+           ▼ Stage 1: Fast Candidate Generation (BM25 + Bi-Encoder Dense Retrieval)
+   [Candidate Pool: K Chunks, e.g., K = 6 to 50]
+           │
+           ▼ Reciprocal Rank Fusion (RRF k=60)
+   [Deduplicated Ranked Candidates: K Chunks]
+           │
+           ▼ Stage 2: Deep Cross-Encoder Reranking (cross-encoder/ms-marco-MiniLM-L6-v2)
+   [Final Precision Context: Top-M Chunks, e.g., M = 3 to 5]
+           │
+           ▼ Stage 3: LLM Answer Synthesis (Gemini API with Citations - Phase 4)
+```
+
+#### Theoretical Computational Complexity Trade-off:
+- **Bi-Encoder / Dense Indexing**:
+  - Corpus encoding occurs **offline** once: $O(N \cdot L_{\text{chunk}}^2)$.
+  - Online query-time search is a matrix-vector dot product: $O(N \cdot d)$ where $d=384$. Because dot products over pre-computed vectors are lightweight BLAS operations, dense search over $N$ pre-indexed chunks requires vastly fewer online FLOPs than running full transformer passes at query time.
+- **Cross-Encoder**:
+  - Encodes the query and passage **jointly**: `[CLS] Query [SEP] Passage [SEP]`.
+  - Offline pre-computation of relevance is **impossible** because candidate passages must interact directly with the dynamic query text via self-attention.
+  - Inference complexity scales quadratically with concatenated sequence length and linearly with the candidate pool size: $O(K \cdot (L_q + L_d)^2 \cdot L_{\text{layers}})$. Running full cross-attention across an entire corpus of size $N$ for every query is computationally prohibitive.
+  - By restricting reranking to a candidate pool $K \ll N$ (e.g., $K=6$ to $20$), deep cross-attention is constrained to a small, tractable subset of candidates. *(Note: Actual wall-clock latency varies based on hardware acceleration, CPU/GPU concurrency, batch size, and sequence length, and must be measured empirically on target deployment hardware rather than assumed.)*
+
+### 8.2 Cross-Encoder Attention Mechanics
+- **Bi-Encoder Limitation**: The bi-encoder compresses a chunk into a single 384-dimensional vector. During cosine similarity ($\mathbf{q} \cdot \mathbf{d}$), no token-to-token attention can happen between query words and document words. Nuances such as negation ("not required" vs "required") or specific syntactic modifiers are easily lost during mean pooling.
+- **Cross-Encoder Advantage**: Self-attention layers compute all-to-all attention between every token of the query and every token of the candidate chunk simultaneously. The model observes full contextual dependencies and word interactions before predicting relevance.
+
+### 8.3 Important Engineering Caveats
+1. **Uncalibrated Logits vs. Probabilities**:
+   - The Cross-Encoder outputs raw, real-valued scalar logits $s \in (-\infty, \infty)$ trained with binary cross-entropy on MS MARCO passage ranking.
+   - Higher scores indicate stronger predicted relevance, but these values are **not calibrated probabilities**. A score of `3.0` does not mean "300% confident" nor does a difference between `1.0` and `2.0` represent double the likelihood. Reranking relies strictly on ordinal sorting by score descending.
+2. **Empirical Validation Requirement**:
+   - Applying a pretrained reranker does not automatically guarantee superior answer quality on every domain. Domain mismatch or poor candidate generation can cause the reranker to promote distractors.
+   - Any claims of improved retrieval accuracy must be validated quantitatively using information retrieval benchmarks (Recall@k, MRR) as planned for Phase 5.
+3. **Deterministic Tie-Breaking & Robustness**:
+   - When two candidate passages receive identical relevance logits, tie-breaking falls back deterministically to alphabetical `chunk_id` ordering.
+   - Numerical stability checks ensure non-finite values (`NaN`, `Inf`) raise descriptive `ValueError` exceptions immediately rather than corrupting downstream ranking.
+
+### 8.4 Component Breakdown (`src/hybrid_rag/reranker.py` & `schema.py`)
+- **`CrossEncoderReranker`**:
+  - `model_name_or_path`: Defaults to `cross-encoder/ms-marco-MiniLM-L6-v2`.
+  - `model`: Supports dependency-injected test doubles (`FakeCrossEncoder`) for 100% offline, reproducible testing.
+  - `_get_model()`: Implements lazy loading so that importing the class does not trigger heavy PyTorch or network overhead.
+  - `rerank(query, candidates, top_k)`: Forms `(query, cand.chunk.text)` pairs, computes model predictions in configurable batches, validates numerical stability, sorts deterministically, and slices to `top_k`.
+- **`RerankedResult`**:
+  - Retains the underlying `Chunk` with full text and page/character offsets.
+  - Retains the new `rerank_rank` (1-based) and `reranker_score` (logit).
+  - Preserves complete pre-rerank provenance: `rrf_score`, `rrf_rank`, `bm25_rank`, `bm25_score`, `dense_rank`, and `dense_score`.
+
+### 8.5 Python Usage Example (Phase 3)
+```python
+from hybrid_rag import (
+    BM25Retriever,
+    CrossEncoderReranker,
+    DenseRetriever,
+    DocumentLoader,
+    TextChunker,
+    reciprocal_rank_fusion,
+)
+
+# 1. Ingest and chunk documents
+doc = DocumentLoader.load("sample_docs/apollo_space_missions.md")
+chunks = TextChunker(chunk_size=500, chunk_overlap=100).chunk_document(doc)
+
+# 2. Build first-stage indexes
+bm25 = BM25Retriever(chunks=chunks)
+dense = DenseRetriever(chunks=chunks)
+
+# 3. Retrieve and fuse candidates (Stage 1)
+query = "What rocket was used to launch the Apollo missions?"
+bm25_candidates = bm25.retrieve(query, top_k=6)
+dense_candidates = dense.retrieve(query, top_k=6)
+fused_candidates = reciprocal_rank_fusion(bm25_candidates, dense_candidates, k=60, top_k=6)
+
+# 4. Precision rerank top candidates (Stage 2)
+reranker = CrossEncoderReranker()
+final_results = reranker.rerank(query=query, candidates=fused_candidates, top_k=3)
+
+for res in final_results:
+    print(f"Rerank #{res.rerank_rank} (Score: {res.reranker_score:.4f}) | Pre-Rerank RRF Rank: {res.rrf_rank}")
+    print(f"Source: {res.chunk.document_name} | Chunk ID: {res.chunk.chunk_id}")
+    print(f"Text: {res.chunk.text[:80]}...\n")
+```
+

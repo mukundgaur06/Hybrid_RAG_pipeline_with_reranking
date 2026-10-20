@@ -49,7 +49,8 @@ Hybrid_RAG_pipeline_with_reranking/
 │   ├── README.md             # Benchmark description and metrics guide
 │   └── benchmark_dataset.json# Evaluation queries, targets & ground truths
 ├── examples/                 # Executable scripts and demos
-│   └── demo_retrieval.py     # Live demonstration of Lexical, Dense, and RRF retrieval
+│   ├── demo_retrieval.py     # Live demonstration of Lexical, Dense, and RRF retrieval
+│   └── demo_reranker.py      # Live demonstration of Cross-Encoder precision reranking
 ├── sample_docs/              # Factual documents for testing & ingestion
 │   ├── apollo_space_missions.md
 │   ├── cloud_computing_overview.md
@@ -60,7 +61,8 @@ Hybrid_RAG_pipeline_with_reranking/
 │       ├── chunker.py        # Configurable chunking with page isolation
 │       ├── exceptions.py     # Custom error hierarchy
 │       ├── loader.py         # DocumentLoader (PDF, TXT, MD)
-│       ├── schema.py         # Typed dataclasses (Document, Chunk, RetrievalResult, FusedResult)
+│       ├── reranker.py       # CrossEncoderReranker (second-stage cross-attention)
+│       ├── schema.py         # Typed dataclasses (Document, Chunk, RetrievalResult, FusedResult, RerankedResult)
 │       └── retrieval/        # Retrieval and fusion subpackage
 │           ├── __init__.py
 │           ├── bm25.py       # BM25Retriever with regex tokenization
@@ -73,7 +75,8 @@ Hybrid_RAG_pipeline_with_reranking/
     ├── test_dense.py         # Dense similarity & fake model offline tests
     ├── test_environment.py   # Baseline environment verification test
     ├── test_fusion.py        # Exact RRF mathematical & deduplication tests
-    └── test_loader.py        # PDF, TXT, MD loader & failure mode tests
+    ├── test_loader.py        # PDF, TXT, MD loader & failure mode tests
+    └── test_reranker.py      # Cross-encoder scoring, ranking & fake model tests
 ```
 
 ---
@@ -176,8 +179,31 @@ python examples/demo_retrieval.py --query "Which enzyme fixes carbon dioxide dur
 
 ---
 
-## Current Status: Phase 2 Completed
+## Quick Example: Cross-Encoder Precision Reranking (Phase 3)
+
+Run the two-stage hybrid retrieval and reranking demonstration:
+
+```powershell
+python examples/demo_reranker.py
+```
+
+Or query with custom candidate pool and top-k parameters:
+```powershell
+python examples/demo_reranker.py --query "What rocket was used to launch the Apollo missions, and who led its engineering?" --candidate-pool 6 --top-k 3
+```
+
+### Important Reranking Concepts
+- **Two-Stage Architecture**: Reranking is applied strictly to a pre-filtered candidate pool from Stage 1 (RRF fusion), not the entire corpus. This balances the high $O(K \cdot L^2)$ computational complexity of cross-attention with retrieval latency.
+- **Joint Token Interactions**: While Bi-Encoders compress text into fixed vectors independently, Cross-Encoders attend over all query and document tokens jointly via all-to-all attention layers.
+- **Uncalibrated Scores**: Cross-Encoder scores are unbounded relevance logits (higher = more relevant). They are *not* calibrated probabilities and should not be interpreted as percentage confidences.
+- **Empirical Validation Required**: Adding a reranker shifts candidate ordering according to the model's relevance training, but whether it improves real-world task accuracy must be empirically validated on a benchmark dataset (scheduled for Phase 5).
+
+---
+
+## Current Status: Phase 3 Completed
 - [x] Phase 0: Workspace inspection, scaffolding, architecture documentation, sample docs.
 - [x] Phase 1: Robust document loading (`PDF`, `TXT`, `MD`), typed dataclasses, and metadata-preserving chunking.
 - [x] Phase 2: Dual retrieval engines (BM25 lexical search, Dense Bi-Encoder cosine similarity) and Reciprocal Rank Fusion (RRF).
-- [ ] *Next: Phase 3 — Cross-Encoder Precision Reranking (`ms-marco-MiniLM-L6-v2`).*
+- [x] Phase 3: Cross-Encoder precision reranking (`cross-encoder/ms-marco-MiniLM-L6-v2`) with rank provenance tracking.
+- [ ] *Next: Phase 4 — Grounded Synthesis & Citation Engine (Gemini API with offline fallback).*
+

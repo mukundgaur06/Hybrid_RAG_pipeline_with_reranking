@@ -40,12 +40,18 @@ This roadmap organizes the development of HybridRAG into self-contained, verifia
 ## Phase 3: Hybrid Fusion (RRF) & Cross-Encoder Reranking
 - **Objective**: Fuse disparate retrieval rankings and apply deep transformer cross-attention to re-order the top candidates.
 - **Key Deliverables**:
-  - `src/hybrid_rag/retrieval/fusion.py`: Scale-invariant Reciprocal Rank Fusion (RRF) combining BM25 and Dense result ranks.
-  - `src/hybrid_rag/reranker.py`: Cross-Encoder reranking using `cross-encoder/ms-marco-MiniLM-L6-v2` taking query-document pairs.
+  - [x] `src/hybrid_rag/retrieval/fusion.py`: Scale-invariant Reciprocal Rank Fusion (RRF) combining BM25 and Dense result ranks.
+  - [x] `src/hybrid_rag/reranker.py`: Cross-Encoder reranking using `cross-encoder/ms-marco-MiniLM-L6-v2` taking query-document pairs.
+  - [x] `src/hybrid_rag/schema.py`: Added `RerankedResult` dataclass preserving complete pre-rerank provenance.
+  - [x] `src/hybrid_rag/__init__.py`: Exported `CrossEncoderReranker` and `RerankedResult`.
+  - [x] `tests/test_reranker.py`: 100% offline unit tests verifying sorting, bounds, tie-breaking, metadata preservation, and error handling with `FakeCrossEncoder`.
+  - [x] `examples/demo_reranker.py`: Interactive demonstration comparing Stage 1 RRF candidates with Stage 2 Cross-Encoder results.
 - **Testing**:
-  - Fusion unit test verifying RRF score calculation with standard $k=60$.
-  - End-to-end reranking test comparing pre-rerank and post-rerank candidate order on ambiguous queries.
-- **Interview Focus**: Bi-Encoder vs. Cross-Encoder compute trade-offs; why score normalization fails across heterogeneous retrievers and why RRF solves it.
+  - [x] 10 dedicated offline reranker unit tests passing.
+  - [x] Full automated test suite (42 tests) passing without regressions.
+- **Checkpoint**: Cross-Encoder precision reranker complete; verified with 42 automated tests and smoke demonstration script.
+- **Interview Focus**: Bi-Encoder vs. Cross-Encoder compute trade-offs; why score normalization fails across heterogeneous retrievers and why RRF solves it; uncalibrated logits vs. probabilities; multi-stage retrieval architecture.
+
 
 ---
 

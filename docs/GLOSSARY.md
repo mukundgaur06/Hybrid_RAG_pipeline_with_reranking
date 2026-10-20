@@ -49,14 +49,20 @@ This glossary provides crystal-clear, interview-ready explanations of the core m
 
 ---
 
-## 6. Cross-Encoder
+## 6. Cross-Encoder & Second-Stage Reranking
 - **Definition**: A transformer architecture that takes both the query and the document concatenated together as a single input sequence: `[CLS] Query [SEP] Document [SEP]`.
 - **How it differs from Bi-Encoders**:
   - *Bi-Encoder*: Query and Document are encoded independently into isolated vectors. No cross-attention occurs between query words and document words.
   - *Cross-Encoder*: Self-attention layers compute all-to-all attention between every token of the query and every token of the document simultaneously.
-- **Trade-off**: Cross-Encoders are significantly more accurate than Bi-Encoders, but cannot pre-compute embeddings offline. Hence, in HybridRAG, we use Bi-Encoder + BM25 to retrieve the top 10-20 candidates, and the Cross-Encoder only reranks those top candidates.
+- **Why it is a Second-Stage Operation**:
+  Cross-Encoders cannot pre-compute embeddings offline because the query and candidate document must be jointly processed. Because full cross-attention scales quadratically with sequence length $O((L_q + L_d)^2)$, it is computationally prohibitive to run across an entire collection. Instead, it is applied exclusively as a second-stage precision filter over a small candidate pool (e.g., top 10–20 chunks from BM25 + Dense RRF fusion).
+- **Uncalibrated Logits vs. Probabilities**:
+  Cross-Encoder output scores are uncalibrated real-valued logits (higher score = higher predicted relevance). They are not calibrated probabilities and do not represent percentage confidence. Reranking relies strictly on ordinal sorting.
+- **Empirical Validation Warning**:
+  Introducing a reranker does not automatically prove improved retrieval accuracy in production. Domain discrepancies, noise, or poor first-stage candidate recall can undermine reranking. Any quality claim must be empirically measured against a benchmark dataset using IR metrics (such as Recall@k and MRR).
 
 ---
+
 
 ## 7. Grounding
 - **Definition**: The technique of restricting an LLM's generation strictly to verified information provided in the prompt context.
