@@ -48,6 +48,8 @@ Hybrid_RAG_pipeline_with_reranking/
 ├── evaluation/
 │   ├── README.md             # Benchmark description and metrics guide
 │   └── benchmark_dataset.json# Evaluation queries, targets & ground truths
+├── examples/                 # Executable scripts and demos
+│   └── demo_retrieval.py     # Live demonstration of Lexical, Dense, and RRF retrieval
 ├── sample_docs/              # Factual documents for testing & ingestion
 │   ├── apollo_space_missions.md
 │   ├── cloud_computing_overview.md
@@ -58,11 +60,19 @@ Hybrid_RAG_pipeline_with_reranking/
 │       ├── chunker.py        # Configurable chunking with page isolation
 │       ├── exceptions.py     # Custom error hierarchy
 │       ├── loader.py         # DocumentLoader (PDF, TXT, MD)
-│       └── schema.py         # Typed dataclasses (Document, DocumentPage, Chunk)
+│       ├── schema.py         # Typed dataclasses (Document, Chunk, RetrievalResult, FusedResult)
+│       └── retrieval/        # Retrieval and fusion subpackage
+│           ├── __init__.py
+│           ├── bm25.py       # BM25Retriever with regex tokenization
+│           ├── dense.py      # DenseRetriever with single-pass in-memory cosine sim
+│           └── fusion.py     # Reciprocal Rank Fusion (RRF)
 └── tests/                    # Unit and integration test suite
     ├── __init__.py
+    ├── test_bm25.py          # Lexical ranking, tokenization & edge case tests
     ├── test_chunker.py       # Chunk boundaries, overlap & page isolation tests
+    ├── test_dense.py         # Dense similarity & fake model offline tests
     ├── test_environment.py   # Baseline environment verification test
+    ├── test_fusion.py        # Exact RRF mathematical & deduplication tests
     └── test_loader.py        # PDF, TXT, MD loader & failure mode tests
 ```
 
@@ -151,7 +161,23 @@ The Apollo program was an American hu...
 
 ---
 
-## Current Status: Phase 1 Completed
+## Quick Example: Hybrid Retrieval & Fusion (Phase 2)
+
+Run the end-to-end retrieval smoke test in your virtual environment:
+
+```powershell
+python examples/demo_retrieval.py
+```
+
+Or query with a custom prompt:
+```powershell
+python examples/demo_retrieval.py --query "Which enzyme fixes carbon dioxide during the Calvin cycle?"
+```
+
+---
+
+## Current Status: Phase 2 Completed
 - [x] Phase 0: Workspace inspection, scaffolding, architecture documentation, sample docs.
 - [x] Phase 1: Robust document loading (`PDF`, `TXT`, `MD`), typed dataclasses, and metadata-preserving chunking.
-- [ ] *Next: Phase 2 — Dual Retrieval Engines (BM25 Lexical & Bi-Encoder Dense Retrieval).*
+- [x] Phase 2: Dual retrieval engines (BM25 lexical search, Dense Bi-Encoder cosine similarity) and Reciprocal Rank Fusion (RRF).
+- [ ] *Next: Phase 3 — Cross-Encoder Precision Reranking (`ms-marco-MiniLM-L6-v2`).*

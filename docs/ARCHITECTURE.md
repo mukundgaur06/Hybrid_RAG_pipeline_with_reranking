@@ -190,3 +190,54 @@ The Apollo program was an American human spaceflight init...
 - **Corrupt / Malformed Files**: Corrupt streams trigger `DocumentParsingError` with descriptive context.
 - **Encoding Quirks**: Plain text loading defaults to UTF-8 with automatic fallback to Latin-1.
 - **Validation**: Strict checks ensure `chunk_size > 0`, `chunk_overlap >= 0`, and `chunk_overlap < chunk_size`.
+
+---
+
+## 7. Dual Retrieval & Reciprocal Rank Fusion (Phase 2 Implementation)
+
+### 7.1 Component Breakdown & Data Flow
+Phase 2 establishes parallel candidate generation and scale-invariant rank aggregation:
+
+1. **BM25Retriever (`src/hybrid_rag/retrieval/bm25.py`)**:
+   - Tokenizes input texts and queries with a unified regex tokenizer (`\w+`, lowercased).
+   - Ingests `Chunk` instances into an in-memory `BM25Okapi` inverted index.
+   - Computes query scores and returns ranked `RetrievalResult` objects.
+   - Employs token-presence filtering to eliminate chunks that share zero query terms while gracefully handling degenerate negative IDF values on small collections.
+
+2. **DenseRetriever (`src/hybrid_rag/retrieval/dense.py`)**:
+   - Uses `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense embeddings).
+   - **Single-Pass In-Memory Indexing**: All chunks are encoded once at index time into a matrix $\mathbf{E} \in \mathbb{R}^{N \times 384}$, which is unit-normalized along rows: $\mathbf{E}_{\text{norm}} = \frac{\mathbf{E}}{\|\mathbf{E}\|_2}$.
+   - **Vectorized Query Cosine Similarity**: Query text is encoded and normalized to $\mathbf{q}_{\text{norm}} \in \mathbb{R}^{384}$. Cosine similarities for all $N$ chunks are calculated simultaneously via a single BLAS matrix-vector product:
+     $$\mathbf{S} = \mathbf{E}_{\text{norm}} \cdot \mathbf{q}_{\text{norm}}$$
+   - Detects non-finite vectors (`NaN` / `Inf`) and applies deterministic sorting with $O(N)$ top-K filtering.
+
+3. **Reciprocal Rank Fusion (`src/hybrid_rag/retrieval/fusion.py`)**:
+   - Blends ranked candidate lists from BM25 and Dense retrieval into a single deduplicated list of `FusedResult` objects.
+   - **Formula**: For candidate chunk $d$:
+     $$\text{RRF\_Score}(d) = \sum_{m \in \{\text{BM25}, \text{Dense}\}} \frac{1}{k + \text{rank}_m(d)}$$
+     with standard smoothing constant $k=60$.
+   - **Scale Invariance**: Because BM25 scores are unbounded $[0, \infty)$ and dense cosine similarities are bounded $[-1, 1]$, raw scores can never be summed directly. RRF relies exclusively on ordinal integer ranks (1, 2, ...), preventing score magnitude domination.
+   - **Deterministic Tie-Breaking**: Chunks with identical RRF scores are ordered alphabetically by `chunk_id`.
+
+### 7.2 Python Usage Example (Phase 2)
+```python
+from hybrid_rag import BM25Retriever, DenseRetriever, DocumentLoader, TextChunker, reciprocal_rank_fusion
+
+# 1. Ingest and chunk sample document
+doc = DocumentLoader.load("sample_docs/apollo_space_missions.md")
+chunks = TextChunker(chunk_size=500, chunk_overlap=100).chunk_document(doc)
+
+# 2. Build in-memory indexes
+bm25 = BM25Retriever(chunks=chunks)
+dense = DenseRetriever(chunks=chunks)
+
+# 3. Retrieve and fuse
+query = "What rocket was used to launch the Apollo missions?"
+bm25_results = bm25.retrieve(query, top_k=3)
+dense_results = dense.retrieve(query, top_k=3)
+fused_results = reciprocal_rank_fusion(bm25_results, dense_results, k=60, top_k=3)
+
+for item in fused_results:
+    print(f"Rank {item.rank} | RRF Score: {item.rrf_score:.6f} | Chunk ID: {item.chunk.chunk_id}")
+    print(f"   Provenance: BM25 Rank {item.bm25_rank} | Dense Rank {item.dense_rank}")
+```

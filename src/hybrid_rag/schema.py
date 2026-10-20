@@ -74,3 +74,39 @@ class Chunk:
     char_start: int
     char_end: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class RetrievalResult:
+    """Represents a single retrieved chunk from a single retrieval engine.
+
+    Attributes:
+        chunk: The underlying Chunk object preserving full text and metadata.
+        score: The raw score assigned by the retriever (e.g. BM25 score or cosine similarity).
+        rank: 1-based rank position within this retriever's candidate list.
+    """
+    chunk: Chunk
+    score: float
+    rank: int
+
+
+@dataclass
+class FusedResult:
+    """Represents a candidate chunk resulting from rank-based fusion (e.g. RRF).
+
+    Attributes:
+        chunk: The underlying Chunk object.
+        rrf_score: The calculated Reciprocal Rank Fusion score.
+        rank: 1-based rank position within the fused candidate list.
+        bm25_rank: Original 1-based rank from BM25 retrieval, or None if not present.
+        bm25_score: Original raw score from BM25 retrieval, or None if not present.
+        dense_rank: Original 1-based rank from Dense retrieval, or None if not present.
+        dense_score: Original cosine similarity from Dense retrieval, or None if not present.
+    """
+    chunk: Chunk
+    rrf_score: float
+    rank: int
+    bm25_rank: Optional[int] = None
+    bm25_score: Optional[float] = None
+    dense_rank: Optional[int] = None
+    dense_score: Optional[float] = None

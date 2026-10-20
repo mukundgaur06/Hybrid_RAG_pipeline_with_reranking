@@ -18,7 +18,8 @@ from hybrid_rag.exceptions import (
     UnsupportedFileTypeError,
 )
 from hybrid_rag.loader import DocumentLoader
-from hybrid_rag.schema import Chunk, Document, DocumentPage
+from hybrid_rag.retrieval import BM25Retriever, DenseRetriever, reciprocal_rank_fusion, tokenize
+from hybrid_rag.schema import Chunk, Document, DocumentPage, FusedResult, RetrievalResult
 
 __version__ = "0.1.0"
 
@@ -28,6 +29,12 @@ __all__ = [
     "Document",
     "DocumentPage",
     "Chunk",
+    "RetrievalResult",
+    "FusedResult",
+    "BM25Retriever",
+    "tokenize",
+    "DenseRetriever",
+    "reciprocal_rank_fusion",
     "HybridRAGError",
     "UnsupportedFileTypeError",
     "EmptyDocumentError",

@@ -26,15 +26,14 @@ This roadmap organizes the development of HybridRAG into self-contained, verifia
 
 ---
 
-## Phase 2: Dual Retrieval Engines (BM25 & Dense Bi-Encoder)
-- **Objective**: Implement lexical and dense vector search independently in pure Python and NumPy.
-- **Key Deliverables**:
-  - `src/hybrid_rag/retrieval/bm25.py`: Corpus tokenization, term-frequency indexing, and BM25Okapi scoring using `rank-bm25`.
-  - `src/hybrid_rag/retrieval/dense.py`: Embedding computation with `sentence-transformers` (`all-MiniLM-L6-v2`) and vectorized cosine similarity using NumPy matrix multiplication.
-- **Testing**:
-  - Keyword search test where BM25 finds exact technical terms that dense search misses.
-  - Semantic paraphrase test where dense search matches synonymous concepts that share no common keywords with the document.
-- **Interview Focus**: Inverted indices vs. vector index math; time and space complexity of cosine similarity across $N$ document vectors.
+## Phase 2: Dual Retrieval Engines & Reciprocal Rank Fusion (Completed)
+- [x] Implement `src/hybrid_rag/retrieval/bm25.py`: Consistent regex tokenization and BM25Okapi scoring.
+- [x] Implement `src/hybrid_rag/retrieval/dense.py`: Single-pass embedding encoding, unit normalization, and NumPy cosine similarity.
+- [x] Implement `src/hybrid_rag/retrieval/fusion.py`: Scale-invariant Reciprocal Rank Fusion (RRF) with configurable $k=60$ and deterministic tie-breaking.
+- [x] Add result dataclasses (`RetrievalResult`, `FusedResult`) in `src/hybrid_rag/schema.py`.
+- [x] Create 100% offline unit tests (`tests/test_bm25.py`, `tests/test_dense.py`, `tests/test_fusion.py`) with a `FakeEmbeddingModel` test double.
+- [x] Add live demonstration and smoke test in `examples/demo_retrieval.py`.
+- **Checkpoint**: Retrieval and fusion engines complete; verified with 32 automated tests.
 
 ---
 
