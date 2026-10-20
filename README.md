@@ -26,8 +26,8 @@ Raw Documents (PDF, TXT, MD) ──► Chunker (with metadata)
        (Optional Gemini API)                     (Zero-API-key fallback)
 ```
 
-For complete technical specifications, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).  
-For core concept definitions (chunking, embeddings, RRF, Cross-Encoder, MRR), see [`docs/GLOSSARY.md`](docs/GLOSSARY.md).  
+For complete technical specifications, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+For core concept definitions (chunking, embeddings, RRF, Cross-Encoder, MRR), see [`docs/GLOSSARY.md`](docs/GLOSSARY.md).
 For the phase-by-phase roadmap, see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
@@ -54,10 +54,16 @@ Hybrid_RAG_pipeline_with_reranking/
 │   └── photosynthesis_biology.txt
 ├── src/
 │   └── hybrid_rag/           # Core package source code
-│       └── __init__.py
+│       ├── __init__.py       # Package exports
+│       ├── chunker.py        # Configurable chunking with page isolation
+│       ├── exceptions.py     # Custom error hierarchy
+│       ├── loader.py         # DocumentLoader (PDF, TXT, MD)
+│       └── schema.py         # Typed dataclasses (Document, DocumentPage, Chunk)
 └── tests/                    # Unit and integration test suite
     ├── __init__.py
-    └── test_environment.py   # Baseline environment verification test
+    ├── test_chunker.py       # Chunk boundaries, overlap & page isolation tests
+    ├── test_environment.py   # Baseline environment verification test
+    └── test_loader.py        # PDF, TXT, MD loader & failure mode tests
 ```
 
 ---
@@ -79,7 +85,7 @@ py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-> **Note for PowerShell execution policy**: If you encounter an execution policy restriction when activating, run:  
+> **Note for PowerShell execution policy**: If you encounter an execution policy restriction when activating, run:
 > `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`
 
 ### 3. Install Dependencies
@@ -99,24 +105,53 @@ Copy-Item .env.example .env
 ```
 *(Optional)* Open `.env` and insert your Gemini API Key if you want to test generative answer synthesis in Phase 4. If omitted, the system defaults to pure retrieval & evidence inspection.
 
-### 5. Run Baseline Tests
-Verify that your environment and file structure match Phase 0 prerequisites:
+### 5. Run the Test Suite
+Verify that all unit tests across the ingestion layer pass:
 
-```powershell
-python tests/test_environment.py
-```
-Or, once `pytest` is installed in your `.venv`:
 ```powershell
 pytest -v
 ```
 
 ---
 
-## Current Status: Phase 0 Completed
-- [x] Workspace inspection and environment audit.
-- [x] Architectural documentation and system diagram.
-- [x] Project scaffolding and repository hygiene.
-- [x] Sample factual test documents.
-- [x] Evaluation benchmark dataset.
-- [x] Concept glossary and implementation roadmap.
-- [ ] *Next: Phase 1 — Document Ingestion and Metadata-Preserving Chunking.*
+## Quick Example: Ingestion & Chunking (Phase 1)
+
+```python
+from hybrid_rag import DocumentLoader, TextChunker
+
+# 1. Load document (PDF, Markdown, or TXT)
+doc = DocumentLoader.load("sample_docs/apollo_space_missions.md")
+print(f"Loaded: {doc.filename} (Type: {doc.file_type}, Pages: {doc.total_pages})")
+
+# 2. Chunk with sliding window
+chunker = TextChunker(chunk_size=500, chunk_overlap=100)
+chunks = chunker.chunk_document(doc)
+
+print(f"Total Chunks: {len(chunks)}")
+print(f"First Chunk ID: {chunks[0].chunk_id}")
+print(f"Offsets: [{chunks[0].char_start} : {chunks[0].char_end}]")
+print(f"Page Attribution: {chunks[0].page_number}")
+print(f"Snippet:\n{chunks[0].text[:100]}...")
+```
+
+Expected Output:
+```text
+Loaded: apollo_space_missions.md (Type: md, Pages: 1)
+Total Chunks: 6
+First Chunk ID: apollo_space_missions_937f609c_c0
+Offsets: [0 : 500]
+Page Attribution: None
+Snippet:
+# Apollo Lunar Exploration Program
+
+## Overview of the Program
+The Apollo program was an American hu...
+```
+
+
+---
+
+## Current Status: Phase 1 Completed
+- [x] Phase 0: Workspace inspection, scaffolding, architecture documentation, sample docs.
+- [x] Phase 1: Robust document loading (`PDF`, `TXT`, `MD`), typed dataclasses, and metadata-preserving chunking.
+- [ ] *Next: Phase 2 — Dual Retrieval Engines (BM25 Lexical & Bi-Encoder Dense Retrieval).*

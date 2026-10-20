@@ -9,7 +9,7 @@ This glossary provides crystal-clear, interview-ready explanations of the core m
 - **Why it matters**: LLMs and embedding models have finite context windows (e.g., 256 or 512 tokens for bi-encoders). If you pass an entire 50-page PDF into an embedding model, the vector representation gets diluted, and you lose fine-grained semantic resolution.
 - **Chunk Size & Overlap**:
   - *Chunk Size*: Number of characters or tokens per segment (e.g., 500 characters).
-  - *Chunk Overlap*: A shared margin of text between consecutive chunks (e.g., 100 characters). Overlap ensures that a sentence or thought split across chunk boundaries is not severed, preserving contextual continuity for retrieval.
+  - *Chunk Overlap*: A shared margin of text between consecutive chunks (e.g., 100 characters). Overlap helps preserve local context and continuity across boundaries, reducing semantic fragmentation. However, fixed character overlap does not guarantee that every complete sentence will appear intact within a single chunk.
 
 ---
 

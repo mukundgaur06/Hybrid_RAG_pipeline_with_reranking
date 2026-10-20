@@ -16,15 +16,13 @@ This roadmap organizes the development of HybridRAG into self-contained, verifia
 
 ---
 
-## Phase 1: Document Parsing & Metadata-Preserving Chunking
-- **Objective**: Implement clean document ingestion and chunking without losing source provenance.
-- **Key Deliverables**:
-  - `src/hybrid_rag/loader.py`: Modular readers for PDF (`PyMuPDF`), Markdown, and plaintext.
-  - `src/hybrid_rag/chunker.py`: Overlapping chunking engine producing typed `Chunk` dataclasses with `chunk_id`, `document_name`, `page_number`, and `text`.
-- **Testing**:
-  - Unit tests verifying chunk length constraints and overlap consistency.
-  - Test verifying PDF page number tracking matches actual page counts.
-- **Interview Focus**: Why fixed-size chunking with overlap prevents context truncation at token boundaries; handling multi-modal or structured document pitfalls.
+## Phase 1: Document Parsing & Metadata-Preserving Chunking (Completed)
+- [x] Implement `src/hybrid_rag/loader.py` supporting PDF, TXT, and Markdown.
+- [x] Implement `src/hybrid_rag/chunker.py` with sliding window, overlap, and per-page boundary isolation.
+- [x] Establish typed schema (`Document`, `DocumentPage`, `Chunk`) in `src/hybrid_rag/schema.py`.
+- [x] Define custom exceptions (`UnsupportedFileTypeError`, `EmptyDocumentError`, `DocumentParsingError`) in `src/hybrid_rag/exceptions.py`.
+- [x] Full unit test coverage in `tests/test_loader.py` and `tests/test_chunker.py`.
+- **Checkpoint**: Robust ingestion layer complete; verified with 17 automated tests.
 
 ---
 

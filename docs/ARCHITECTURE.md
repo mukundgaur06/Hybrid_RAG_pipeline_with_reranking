@@ -120,3 +120,73 @@ flowchart TD
 ### 5.3 In-Memory NumPy Vector Store vs. Heavy Vector DB
 - For an educational and interview-focused project indexing tens to thousands of chunks, an external vector database (Milvus, Pinecone, Qdrant, Chroma) introduces network complexity, external service dependencies, and debugging friction.
 - A normalized NumPy matrix with dot-product cosine similarity $\mathbf{Q} \cdot \mathbf{M}^T$ is mathematically identical to vector DB flat indexing, executes in single-digit milliseconds for $< 100,000$ chunks, and allows students to explain the exact linear algebra behind retrieval.
+
+---
+
+## 6. Document Ingestion Layer (Phase 1 Implementation)
+
+### 6.1 Schema & Data Flow
+The document ingestion layer converts raw files into structured, typed data objects without executing file contents or requiring an external database:
+1. `DocumentLoader.load(file_path)` parses `.pdf`, `.txt`, and `.md` files into a `Document` composed of one or more `DocumentPage` instances.
+2. `TextChunker.chunk_document(document)` splits the pages into discrete, overlapping `Chunk` dataclasses while maintaining 1-based page numbers.
+
+### 6.2 Chunk Size & Overlap Trade-offs
+The choice of `chunk_size` and `chunk_overlap` is a fundamental engineering trade-off in RAG systems:
+- **Small Chunks (e.g. 100–300 chars)**:
+  - *Pros*: Precise semantic vector embeddings; pinpoint retrieval accuracy; less noisy context sent to LLM.
+  - *Cons*: Misses broader contextual context; fragmented concepts; higher total chunk count increases index memory.
+- **Large Chunks (e.g. 1,000–2,000 chars)**:
+  - *Pros*: Preserves long-range reasoning, multi-step arguments, and full paragraphs.
+  - *Cons*: Vector representations become diluted averages ("semantic wash"); LLM context fills up quickly; higher risk of irrelevant filler text in retrieval.
+- **Chunk Overlap (e.g. 10%–25% of chunk size)**:
+  - *Purpose*: Helps preserve local context and semantic continuity across boundaries, reducing fragmentation between adjacent slices.
+  - *Important Limitation*: While overlap mitigates the risk of splitting adjacent words or short phrases, fixed-character sliding windows *do not guarantee* that every complete sentence will appear unbroken in a single chunk. Long sentences or complex clauses can still span across boundaries unless explicit sentence-aware or semantic segmentation is applied.
+
+### 6.3 Page Boundary Isolation for Strict Provenance
+A common flaw in naive RAG pipelines is splitting raw text across page boundaries without tracking where one page ended and the next began. This leads to broken or misleading citations (e.g., claiming a fact is on Page 2 when half of the sentence was on Page 3).
+In HybridRAG:
+- Paginated documents (PDFs) are chunked on a **per-page basis**.
+- Each generated `Chunk` has an explicit 1-based `page_number` matching the physical PDF page.
+- This guarantees unambiguous evidence attribution in user interfaces and interview explanations.
+
+### 6.4 Python Usage Example
+```python
+from pathlib import Path
+from hybrid_rag import DocumentLoader, TextChunker
+
+# 1. Load document with automatic format detection
+doc = DocumentLoader.load("sample_docs/apollo_space_missions.md")
+print(f"Loaded '{doc.filename}' ({doc.file_type}) with {doc.total_pages} page(s).")
+
+# 2. Chunk with 500-char window and 100-char overlap
+chunker = TextChunker(chunk_size=500, chunk_overlap=100)
+chunks = chunker.chunk_document(doc)
+
+print(f"Generated {len(chunks)} chunks.")
+first_chunk = chunks[0]
+print(f"Chunk ID: {first_chunk.chunk_id}")
+print(f"Offsets: [{first_chunk.char_start} : {first_chunk.char_end}]")
+print(f"Page: {first_chunk.page_number}")
+print(f"Text Preview:\n{first_chunk.text[:120]}...")
+```
+
+Expected Output:
+```text
+Loaded 'apollo_space_missions.md' (md) with 1 page(s).
+Generated 6 chunks.
+Chunk ID: apollo_space_missions_937f609c_c0
+Offsets: [0 : 500]
+Page: None
+Text Preview:
+# Apollo Lunar Exploration Program
+
+## Overview of the Program
+The Apollo program was an American human spaceflight init...
+```
+
+
+### 6.5 Limitations & Edge Cases Handled
+- **Scanned / Image PDFs**: PyMuPDF extracts programmatic text streams. Scanned image-only PDFs without OCR text layers yield zero text and trigger `EmptyDocumentError`.
+- **Corrupt / Malformed Files**: Corrupt streams trigger `DocumentParsingError` with descriptive context.
+- **Encoding Quirks**: Plain text loading defaults to UTF-8 with automatic fallback to Latin-1.
+- **Validation**: Strict checks ensure `chunk_size > 0`, `chunk_overlap >= 0`, and `chunk_overlap < chunk_size`.
