@@ -1,0 +1,26 @@
+# Core Document Parsing
+pymupdf>=1.23.0
+
+# Lexical Search (BM25)
+rank-bm25>=0.2.2
+
+# Dense Search & Cross-Encoder Reranking
+# sentence-transformers provides both SentenceTransformer and CrossEncoder abstractions
+sentence-transformers>=2.6.0
+
+# Numerical Computing & Vector Similarity
+# Bound to <2.0.0 to prevent C-extension ABI conflicts with PyTorch on Windows
+numpy>=1.24.0,<2.0.0
+
+# Generative AI (Optional Answer Generation)
+# Modern Google GenAI SDK for Gemini models
+google-genai>=0.1.1
+
+# Environment & Configuration
+python-dotenv>=1.0.0
+
+# User Interface
+streamlit>=1.32.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0

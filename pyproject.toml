@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hybrid-rag"
+version = "0.1.0"
+description = "Hybrid RAG pipeline combining BM25 lexical search, Dense embeddings, and Cross-Encoder reranking."
+readme = "README.md"
+authors = [{ name = "ML Engineer" }]
+requires-python = ">=3.11"
+dependencies = [
+    "pymupdf>=1.23.0",
+    "rank-bm25>=0.2.2",
+    "sentence-transformers>=2.6.0",
+    "numpy>=1.24.0,<2.0.0",
+    "google-genai>=0.1.1",
+    "python-dotenv>=1.0.0",
+    "streamlit>=1.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

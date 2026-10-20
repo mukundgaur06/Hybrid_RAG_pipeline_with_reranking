@@ -1,0 +1,66 @@
+[
+  {
+    "query_id": "q01",
+    "query": "What rocket was used to launch the Apollo missions, and who led its engineering?",
+    "source_document": "apollo_space_missions.md",
+    "relevant_keywords": ["Saturn V", "Wernher von Braun", "Marshall Space Flight Center"],
+    "ground_truth_answer": "The Saturn V rocket was used, engineered under the leadership of Wernher von Braun at the Marshall Space Flight Center.",
+    "query_type": "keyword_specific"
+  },
+  {
+    "query_id": "q02",
+    "query": "How much thrust did the Saturn V rocket produce at sea level?",
+    "source_document": "apollo_space_missions.md",
+    "relevant_keywords": ["34.5 meganewtons", "7.89 million pounds-force"],
+    "ground_truth_answer": "It produced approximately 34.5 meganewtons (7.89 million pounds-force) of sea-level thrust upon ignition.",
+    "query_type": "numerical_fact"
+  },
+  {
+    "query_id": "q03",
+    "query": "Why was Apollo 13 unable to land on the Moon, and which module served as a life raft?",
+    "source_document": "apollo_space_missions.md",
+    "relevant_keywords": ["oxygen tank", "ruptured", "Aquarius", "life raft"],
+    "ground_truth_answer": "An oxygen tank in the Service Module ruptured due to damaged electrical insulation, forcing the crew to use the Lunar Module Aquarius as a life raft and abort the landing.",
+    "query_type": "semantic_paraphrase"
+  },
+  {
+    "query_id": "q04",
+    "query": "What is the net stoichiometric chemical equation for photosynthesis?",
+    "source_document": "photosynthesis_biology.txt",
+    "relevant_keywords": ["6 CO2 + 6 H2O", "C6H12O6 + 6 O2"],
+    "ground_truth_answer": "6 CO2 + 6 H2O + photons -> C6H12O6 + 6 O2",
+    "query_type": "keyword_specific"
+  },
+  {
+    "query_id": "q05",
+    "query": "What happens during photolysis of water in the light-dependent reactions?",
+    "source_document": "photosynthesis_biology.txt",
+    "relevant_keywords": ["Photosystem II", "split", "protons", "diatomic oxygen"],
+    "ground_truth_answer": "Water molecules are split at Photosystem II into electrons, protons (H+), and diatomic oxygen (O2): 2 H2O -> 4 H+ + 4 e- + O2.",
+    "query_type": "semantic_paraphrase"
+  },
+  {
+    "query_id": "q06",
+    "query": "Which enzyme fixes atmospheric carbon dioxide in the Calvin cycle?",
+    "source_document": "photosynthesis_biology.txt",
+    "relevant_keywords": ["RuBisCO", "Ribulose-1,5-bisphosphate carboxylase-oxygenase", "RuBP"],
+    "ground_truth_answer": "RuBisCO (Ribulose-1,5-bisphosphate carboxylase-oxygenase) catalyzes the carboxylation of RuBP.",
+    "query_type": "keyword_specific"
+  },
+  {
+    "query_id": "q07",
+    "query": "How many minutes of downtime are permitted per year under a four nines SLA?",
+    "source_document": "cloud_computing_overview.md",
+    "relevant_keywords": ["99.99%", "Four Nines", "52.6 minutes per year"],
+    "ground_truth_answer": "A 99.99% ('Four Nines') uptime SLA permits up to 52.6 minutes of downtime per year (4.38 minutes per month).",
+    "query_type": "numerical_fact"
+  },
+  {
+    "query_id": "q08",
+    "query": "How does the cache-aside pattern handle read requests and cache misses?",
+    "source_document": "cloud_computing_overview.md",
+    "relevant_keywords": ["Cache-Aside", "cache miss", "primary relational database", "TTL"],
+    "ground_truth_answer": "The application reads from cache first; on a cache miss, data is retrieved from the relational database and asynchronously written to cache with a Time-To-Live (TTL).",
+    "query_type": "semantic_paraphrase"
+  }
+]
